@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import pygame
 import sys
 import os
@@ -104,34 +105,23 @@ def draw_food_label(food):
         screen.blit(t, (x * CELL + CELL // 2 - t.get_width() // 2, y * CELL - 16))
 
 def draw_touch_controls():
-    # Botões de toque para Celular (D-Pad visual semi-transparente)
-    # Desenhar círculos nos cantos ou áreas de clique
     alpha_surf = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
     ctrl_color = (255, 255, 255, 40)
-    
-    # Posições dos botões (D-Pad no canto inferior direito)
-    btn_size = 60
-    bx, by = WIDTH - 110, HEIGHT - 150
-    
+    btn_size, bx, by = 60, WIDTH - 110, HEIGHT - 150
     pygame.draw.circle(alpha_surf, ctrl_color, (bx, by - btn_size), 30) # Cima
     pygame.draw.circle(alpha_surf, ctrl_color, (bx, by + btn_size), 30) # Baixo
     pygame.draw.circle(alpha_surf, ctrl_color, (bx - btn_size, by), 30) # Esquerda
     pygame.draw.circle(alpha_surf, ctrl_color, (bx + btn_size, by), 30) # Direita
-    
     screen.blit(alpha_surf, (0, 0))
 
 def handle_touch_input(pos):
-    # Converte clique/toque em direção
     bx, by = WIDTH - 110, HEIGHT - 150
     tx, ty = pos
     dist = 40
-    
     if abs(tx - bx) < dist and abs(ty - (by - 60)) < dist: return pygame.K_UP
     if abs(tx - bx) < dist and abs(ty - (by + 60)) < dist: return pygame.K_DOWN
     if abs(tx - (bx - 60)) < dist and abs(ty - by) < dist: return pygame.K_LEFT
     if abs(tx - (bx + 60)) < dist and abs(ty - by) < dist: return pygame.K_RIGHT
-    
-    # Pausa se clicar no topo
     if ty < 50: return pygame.K_p
     return None
 
@@ -139,7 +129,7 @@ def handle_touch_input(pos):
 # Telas
 # ---------------------------------------------------------------------------
 async def menu_screen(gold):
-    opts = ["Modo Clássico (paredes)", "Modo Livre (wrap)", "Multiplayer (X1)", "Selecionar Nível", "Loja de Skins"]
+    opts = ["Modo Classico", "Modo Livre", "Multiplayer (X1)", "Fases", "Loja"]
     sel = 0
     while True:
         clock.tick(FPS)
@@ -156,7 +146,6 @@ async def menu_screen(gold):
                     if abs(my - (y + 15)) < 20: 
                         if sel == i: return i
                         sel = i
-        
         screen.fill(BG)
         t = font_big.render("SNAKE DELUXE", True, (100, 255, 150))
         screen.blit(t, (WIDTH // 2 - t.get_width() // 2, 60))
@@ -193,7 +182,7 @@ async def level_selection_screen():
                         if sel == i: return i
                         sel = i
         screen.fill(BG)
-        t = font_mid.render("SELECIONAR NÍVEL", True, TEXT)
+        t = font_mid.render("SELECIONAR NIVEL", True, TEXT)
         screen.blit(t, (WIDTH // 2 - t.get_width() // 2, 40))
         for i, level in enumerate(LEVELS):
             color = (255, 255, 255) if i == sel else (100, 100, 100)
@@ -230,43 +219,30 @@ async def shop_screen(game_data):
                 mx, my = e.pos
                 if mx < WIDTH // 2: sel = (sel - 1) % len(SKINS)
                 else: sel = (sel + 1) % len(SKINS)
-                # Lógica de compra simplificada para toque (clique duplo no card)
                 if my > HEIGHT // 2 - 50 and my < HEIGHT // 2 + 150:
                     skin = SKINS[sel]
                     if skin["name"] in game_data["owned_skins"]: game_data["selected_skin"] = skin["name"]
                     elif game_data["gold"] >= skin["price"]:
-                        game_data["gold"] -= skin["price"]
-                        game_data["owned_skins"].append(skin["name"])
-                        game_data["selected_skin"] = skin["name"]
-                        save_game_data(game_data)
-
-        screen.fill(SHOP_BG)
-        t = font_mid.render("LOJA DE SKINS", True, TEXT)
-        screen.blit(t, (WIDTH // 2 - t.get_width() // 2, 30))
-        g_surf = font_small.render(f"Seu Ouro: {game_data['gold']}", True, GOLD_COLOR)
-        screen.blit(g_surf, (WIDTH // 2 - g_surf.get_width() // 2, 70))
-        skin = SKINS[sel]
-        card_rect = pygame.Rect(WIDTH // 2 - 100, HEIGHT // 2 - 80, 200, 220)
+                        game_data["gold"] -= skin["price"]; game_data["owned_skins"].append(skin["name"])
+                        game_data["selected_skin"] = skin["name"]; save_game_data(game_data)
+        screen.fill(SHOP_BG); t = font_mid.render("LOJA DE SKINS", True, TEXT); screen.blit(t, (WIDTH // 2 - t.get_width() // 2, 30))
+        g_surf = font_small.render(f"Seu Ouro: {game_data['gold']}", True, GOLD_COLOR); screen.blit(g_surf, (WIDTH // 2 - g_surf.get_width() // 2, 70))
+        skin = SKINS[sel]; card_rect = pygame.Rect(WIDTH // 2 - 100, HEIGHT // 2 - 80, 200, 220)
         pygame.draw.rect(screen, SHOP_CARD, card_rect, border_radius=15)
         for i in range(3):
             c = lerp_color(skin["head"], skin["tail"], i/2)
             pygame.draw.rect(screen, c, (WIDTH // 2 - 15, HEIGHT // 2 - 30 + i*25, 30, 20), border_radius=4)
-        name_t = font_small.render(skin["name"], True, TEXT)
-        screen.blit(name_t, (WIDTH // 2 - name_t.get_width() // 2, HEIGHT // 2 + 60))
+        name_t = font_small.render(skin["name"], True, TEXT); screen.blit(name_t, (WIDTH // 2 - name_t.get_width() // 2, HEIGHT // 2 + 60))
         status, color = "", TEXT
-        if skin["name"] == game_data["selected_skin"]:
-            status, color = "[ EQUIPADO ]", (100, 255, 100)
-        elif skin["name"] in game_data["owned_skins"]:
-            status = "EQUIPAR (Toque)"
+        if skin["name"] == game_data["selected_skin"]: status, color = "[ EQUIPADO ]", (100, 255, 100)
+        elif skin["name"] in game_data["owned_skins"]: status = "EQUIPAR (Toque)"
         else:
             status = f"COMPRAR: {skin['price']} Ouro"
             if game_data["gold"] < skin["price"]: color = (255, 100, 100)
-        st_t = font_tiny.render(status, True, color)
-        screen.blit(st_t, (WIDTH // 2 - st_t.get_width() // 2, HEIGHT // 2 + 95))
+        st_t = font_tiny.render(status, True, color); screen.blit(st_t, (WIDTH // 2 - st_t.get_width() // 2, HEIGHT // 2 + 95))
         hint = font_tiny.render("Tocar lados para navegar  ESC voltar", True, (150, 150, 150))
         screen.blit(hint, (WIDTH // 2 - hint.get_width() // 2, HEIGHT - 50))
-        pygame.display.flip()
-        await asyncio.sleep(0)
+        pygame.display.flip(); await asyncio.sleep(0)
 
 async def game_over_screen(score, high, is_record, winner=None):
     while True:
@@ -278,26 +254,19 @@ async def game_over_screen(score, high, is_record, winner=None):
                 if e.key == pygame.K_m: return "menu"
                 if e.key == pygame.K_q: return "quit"
             if e.type == pygame.MOUSEBUTTONDOWN: return "restart"
-        screen.fill(BG)
-        draw_grid()
-        t_title = winner if winner else "GAME OVER"
+        screen.fill(BG); draw_grid(); t_title = winner if winner else "GAME OVER"
         t1 = font_big.render(t_title, True, (255, 100, 100) if not winner else (255, 255, 100))
         screen.blit(t1, (WIDTH // 2 - t1.get_width() // 2, HEIGHT // 2 - 70))
-        t2 = font_mid.render(f"Score: {score}", True, TEXT)
-        screen.blit(t2, (WIDTH // 2 - t2.get_width() // 2, HEIGHT // 2 - 10))
+        t2 = font_mid.render(f"Score: {score}", True, TEXT); screen.blit(t2, (WIDTH // 2 - t2.get_width() // 2, HEIGHT // 2 - 10))
         if is_record and not winner:
-            t3 = font_small.render("NOVO RECORDE!", True, (255, 255, 100))
-            screen.blit(t3, (WIDTH // 2 - t3.get_width() // 2, HEIGHT // 2 + 35))
-        t4 = font_small.render("Toque para Jogar Novamente", True, (150, 150, 150))
-        screen.blit(t4, (WIDTH // 2 - t4.get_width() // 2, HEIGHT // 2 + 85))
-        pygame.display.flip()
-        await asyncio.sleep(0)
+            t3 = font_small.render("NOVO RECORDE!", True, (255, 255, 100)); screen.blit(t3, (WIDTH // 2 - t3.get_width() // 2, HEIGHT // 2 + 35))
+        t4 = font_small.render("Toque para Jogar Novamente", True, (150, 150, 150)); screen.blit(t4, (WIDTH // 2 - t4.get_width() // 2, HEIGHT // 2 + 85))
+        pygame.display.flip(); await asyncio.sleep(0)
 
 # ---------------------------------------------------------------------------
 # Loop Principal do Jogo
 # ---------------------------------------------------------------------------
 async def run_game(wrap_mode, skin_data, obstacles=[], multiplayer=False):
-    # Inicialização das cobras
     p1 = Snake(skin_data["head"], skin_data["tail"], start_pos=P1_START_POS if multiplayer else None, start_dir=RIGHT, key_map=DIR_KEYS)
     snakes, enemies = [p1], []
     if multiplayer:
@@ -346,27 +315,19 @@ async def run_game(wrap_mode, skin_data, obstacles=[], multiplayer=False):
             if e.type == pygame.QUIT: return "quit", {}
             if e.type == pygame.KEYDOWN:
                 if e.key == pygame.K_ESCAPE: return "menu", {}
-                if e.key == pygame.K_p:
-                    state = PAUSED if state == PLAYING else PLAYING
-                    continue
+                if e.key == pygame.K_p: state = PAUSED if state == PLAYING else PLAYING; continue
                 if state == PLAYING:
                     for s in snakes: s.handle_input(e.key)
             if e.type == pygame.MOUSEBUTTONDOWN and state == PLAYING:
-                # Controles de Toque integrados
                 touch_key = handle_touch_input(e.pos)
                 if touch_key:
                     if touch_key == pygame.K_p: state = PAUSED
                     else: 
                         for s in snakes: s.handle_input(touch_key)
-
         if state == PAUSED:
-            screen.fill(BG); t1 = font_big.render("PAUSADO", True, (150, 150, 150))
-            screen.blit(t1, (WIDTH // 2 - t1.get_width() // 2, HEIGHT // 2 - 20))
-            t2 = font_tiny.render("Toque no topo para continuar", True, (100, 100, 100))
-            screen.blit(t2, (WIDTH // 2 - t2.get_width() // 2, HEIGHT // 2 + 30))
-            pygame.display.flip()
-            if pygame.mouse.get_pressed()[0]:
-                if pygame.mouse.get_pos()[1] < 100: state = PLAYING
+            screen.fill(BG); t1 = font_big.render("PAUSADO", True, (150, 150, 150)); screen.blit(t1, (WIDTH // 2 - t1.get_width() // 2, HEIGHT // 2 - 20))
+            t2 = font_tiny.render("Toque no topo para continuar", True, (100, 100, 100)); screen.blit(t2, (WIDTH // 2 - t2.get_width() // 2, HEIGHT // 2 + 30)); pygame.display.flip()
+            if pygame.mouse.get_pressed()[0] and pygame.mouse.get_pos()[1] < 100: state = PLAYING
             await asyncio.sleep(0); continue
 
         move_timer += dt
@@ -379,52 +340,40 @@ async def run_game(wrap_mode, skin_data, obstacles=[], multiplayer=False):
         is_fever_active = any(s.fever_timer > 0 for s in snakes)
         for s in snakes + enemies:
             if s.fever_timer > 0: s.fever_timer -= dt
-        
         base_interval = MOVE_INTERVAL
         if powerup["type"] == ICE: base_interval *= 2.0
         elif powerup["type"] == SPEED or is_fever_active: base_interval *= 0.6
         speed = max(0.04, base_interval - (score * 0.003))
-
         if powerup["timer"] > 0:
             powerup["timer"] -= dt
             if powerup["timer"] <= 0: powerup["type"] = None
-
         shake_timer = max(0, shake_timer - dt)
         shake = (0, 0)
         if shake_timer > 0:
             intensity = shake_intensity * (shake_timer / SHAKE_DURATION)
             shake = (random.randint(-int(intensity), int(intensity)), random.randint(-int(intensity), int(intensity)))
-
         if move_timer >= speed:
             move_timer = 0
             if not multiplayer and score >= last_enemy_spawn_score + ENEMY_SPAWN_SCORE_INTERVAL:
                 spawn_enemy(); last_enemy_spawn_score = score
             for en in enemies: en.decide_direction(food.pos, obstacles, snakes + enemies, wrap_mode)
-            
-            all_active = snakes + enemies
-            new_heads = []
+            all_active, new_heads = snakes + enemies, []
             for s in all_active:
                 nh = s.update(wrap_mode)
                 if active_portal:
                     exit_pos = active_portal.get_exit(nh)
                     if exit_pos:
-                        s.body_set.remove(nh); s.body.pop(0); nh = exit_pos
-                        s.body.insert(0, nh); s.body_set.add(nh)
+                        s.body_set.remove(nh); s.body.pop(0); nh = exit_pos; s.body.insert(0, nh); s.body_set.add(nh)
                         particles.append(Particle(nh[0]*CELL+CELL//2, nh[1]*CELL+CELL//2, (255,255,255), 10))
                 new_heads.append(nh)
-
             food_eaten = False
             for i, s in enumerate(all_active):
                 if new_heads[i] == food.pos:
-                    food_eaten, ptype = True, food.ftype
-                    mult = FEVER_SCORE_MULTIPLIER if s.fever_timer > 0 else 1
+                    food_eaten, ptype = True, food.ftype; mult = FEVER_SCORE_MULTIPLIER if s.fever_timer > 0 else 1
                     if s in snakes:
-                        if ptype == NORMAL:
-                            score += 1 * mult; gold_earned += GOLD_REWARD_NORMAL * mult; snd_eat.play()
-                        elif ptype == GOLDEN:
-                            score += 3 * mult; gold_earned += GOLD_REWARD_GOLDEN * mult; snd_eat_gold.play()
-                        elif ptype in (ICE, SPEED, SHRINK):
-                            apply_powerup(ptype); snd_powerup.play()
+                        if ptype == NORMAL: score += 1 * mult; gold_earned += GOLD_REWARD_NORMAL * mult; snd_eat.play()
+                        elif ptype == GOLDEN: score += 3 * mult; gold_earned += GOLD_REWARD_GOLDEN * mult; snd_eat_gold.play()
+                        elif ptype in (ICE, SPEED, SHRINK): apply_powerup(ptype); snd_powerup.play()
                         if not is_fever_active:
                             combo_count += 1; combo_timer = FEVER_COMBO_TIMEOUT
                             if combo_count >= FEVER_COMBO_LIMIT:
@@ -434,7 +383,6 @@ async def run_game(wrap_mode, skin_data, obstacles=[], multiplayer=False):
                     particles.append(Particle(food.pos[0]*CELL+CELL//2, food.pos[1]*CELL+CELL//2, FOOD_COLORS[ptype], PARTICLE_COUNT_EAT))
                 else: s.pop_tail()
             if food_eaten: food = Food(all_active, obstacles)
-
             dead_player, winner, to_remove_enemies = False, None, []
             for i, s in enumerate(all_active):
                 h, killed = new_heads[i], False
@@ -452,12 +400,9 @@ async def run_game(wrap_mode, skin_data, obstacles=[], multiplayer=False):
                         particles.append(Particle(s.body[0][0]*CELL+CELL//2, s.body[0][1]*CELL+CELL//2, ENEMY_SKIN["head"], 20))
             for en in to_remove_enemies:
                 if en in enemies: enemies.remove(en)
-
             if dead_player:
                 snd_die.play()
-                if multiplayer:
-                    if p1 in snakes and p1.check_collision(wrap_mode): winner = "Jogador 2 Venceu!"
-                    else: winner = "Jogador 1 Venceu!"
+                if multiplayer: winner = "Jogador 2 Venceu!" if p1.check_collision(wrap_mode) else "Jogador 1 Venceu!"
                 data["high_score"] = max(high, score); data["gold"] += gold_earned; save_game_data(data)
                 shake_timer, shake_intensity, death_timer = 0.5, 12, 0.6
                 while death_timer > 0:
@@ -467,81 +412,44 @@ async def run_game(wrap_mode, skin_data, obstacles=[], multiplayer=False):
                     for sn in snakes + enemies: sn.draw(screen, (random.randint(-5,5), random.randint(-5,5)))
                     if multiplayer and winner:
                         tw = font_mid.render(winner, True, (255, 255, 100)); screen.blit(tw, (WIDTH//2 - tw.get_width()//2, HEIGHT//2))
-                    pygame.display.flip()
-                    await asyncio.sleep(0)
+                    pygame.display.flip(); await asyncio.sleep(0)
                 return "over", {"score": score, "high": data["high_score"], "is_record": score > high, "gold_earned": gold_earned, "winner": winner}
-
         for p in particles: p.update(dt)
         particles = [p for p in particles if not p.dead]
         screen.fill(BG); draw_grid(shake); draw_obstacles(obstacles, shake)
         if active_portal: active_portal.draw(screen, t_now, shake)
         for s in snakes + enemies: s.draw(screen, shake)
-        food.draw(screen, t_now, shake); draw_food_label(food)
-        for p in particles: p.draw(screen, shake)
-        draw_score(score, high, powerup["timer"], shake)
-        draw_fever_ui(combo_count, snakes[0].fever_timer, shake)
-        draw_touch_controls()
-        
-        pause_hint = font_tiny.render("Topo = Pausa", True, PAUSE_HINT_COLOR)
-        screen.blit(pause_hint, (WIDTH // 2 - pause_hint.get_width() // 2, 10))
-        pygame.display.flip()
-        await asyncio.sleep(0)
+        food.draw(screen, t_now, shake); draw_food_label(food); for p in particles: p.draw(screen, shake)
+        draw_score(score, high, powerup["timer"], shake); draw_fever_ui(combo_count, snakes[0].fever_timer, shake); draw_touch_controls()
+        pause_hint = font_tiny.render("Topo = Pausa", True, PAUSE_HINT_COLOR); screen.blit(pause_hint, (WIDTH // 2 - pause_hint.get_width() // 2, 10)); pygame.display.flip(); await asyncio.sleep(0)
 
 async def main():
     selected_level_idx = 0
     while True:
-        data = load_game_data()
-        mode = await menu_screen(data["gold"])
-        
-        if mode is None: 
-            break
-        
-        # Mapeamento do menu conforme menu_screen:
-        # 0: Modo Clássico, 1: Modo Livre, 2: Multiplayer (X1), 3: Selecionar Nível, 4: Loja
+        data = load_game_data(); mode = await menu_screen(data["gold"])
+        if mode is None: break
         is_multiplayer = (mode == 2)
-        
-        if mode == 3: # Seleção de Nível
+        if mode == 3:
             lvl_action = await level_selection_screen()
             if lvl_action == "quit": break
-            if isinstance(lvl_action, int):
-                selected_level_idx = lvl_action
+            if isinstance(lvl_action, int): selected_level_idx = lvl_action
             continue
-            
-        if mode == 4: # Loja
+        if mode == 4:
             shop_action = await shop_screen(data)
             if shop_action == "quit": break
             continue
-
-        # Configurações da partida
         selected_skin_data = next(s for s in SKINS if s["name"] == data["selected_skin"])
         obstacles = LEVELS[selected_level_idx]["obstacles"]
-
         while True:
-            # mode == 1 é Modo Livre (wrap)
             result, game_result = await run_game(mode == 1, selected_skin_data, obstacles, is_multiplayer)
-            
             if result == "over":
-                action = await game_over_screen(
-                    game_result["score"], 
-                    game_result["high"], 
-                    game_result["is_record"],
-                    game_result.get("winner")
-                )
-                if action == "restart":
-                    continue
-                elif action == "menu":
-                    break
-                else: # quit
-                    pygame.quit()
-                    sys.exit()
-            elif result == "menu":
-                break
-            else: # quit
-                pygame.quit()
-                sys.exit()
-                
-    pygame.quit()
-    sys.exit()
+                action = await game_over_screen(game_result["score"], game_result["high"], game_result["is_record"], game_result.get("winner"))
+                if action == "restart": continue
+                elif action == "menu": break
+                else: pygame.quit(); sys.exit()
+            elif result == "menu": break
+            else: pygame.quit(); sys.exit()
+    pygame.quit(); sys.exit()
 
 if __name__ == "__main__":
     asyncio.run(main())
