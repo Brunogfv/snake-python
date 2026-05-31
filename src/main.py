@@ -424,6 +424,7 @@ async def run_game(wrap_mode, skin_data, obstacles=[], multiplayer=False):
         pause_hint = font_tiny.render("Topo = Pausa", True, PAUSE_HINT_COLOR); screen.blit(pause_hint, (WIDTH // 2 - pause_hint.get_width() // 2, 10)); pygame.display.flip(); await asyncio.sleep(0)
 
 async def main():
+    init_audio()
     selected_level_idx = 0
     while True:
         data = load_game_data(); mode = await menu_screen(data["gold"])
